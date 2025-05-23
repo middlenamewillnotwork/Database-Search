@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Search</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1 id="mainTitle">Database Search</h1>
+                <div class="header-actions">
+                    <div id="totalRecordsContainer" class="total-records">Total Records: <span id="totalRecords">0</span></div>
+                    <button id="fetchData" class="btn">
+                        <i class="fas fa-sync-alt"></i> Fetch Data
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Fetching data...</div>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search in all columns...">
+            <div id="suggestions" class="suggestions"></div>
+        </div>
+
+        <div class="table-container">
+            <div id="loading" class="loading">Loading data...</div>
+            <div id="tableWrapper">
+                <table id="dataTable">
+                    <thead>
+                        <tr id="tableHeader"></tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            <div class="pagination">
+                <div class="pagination-controls">
+                    <button id="prevPage" class="btn" title="Previous page" aria-label="Previous page" disabled>←</button>
+                    <span id="pageInfo">Page 1 of 1</span>
+                    <button id="nextPage" class="btn" title="Next page" aria-label="Next page" disabled>→</button>
+                </div>
+                <div class="page-jump-container">
+                    <!-- Page jump controls will be inserted here by JavaScript -->
+                </div>
+            </div>
+            <button id="backToTopBtn" title="Go to top">↑</button>
+        </div>
+    </div>
+
+    <!-- Sheet Selection Modal -->
+    <div id="sheetModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close">&times;</span>
+            <h2>Select a Sheet</h2>
+            <div id="sheetList" class="sheet-list">
+                <!-- Sheets will be added here dynamically -->
+                <div class="loading">Loading sheets...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail View Modal -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <!-- Load scripts in the correct order -->
+    <script src="js/storage.js"></script>
+    <script src="js/table.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/app-new.js"></script>
+</body>
+</html>
