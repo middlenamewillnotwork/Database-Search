@@ -1,0 +1,12 @@
+{
+  "sheets": [
+    {
+      "name": "Delinquency - May'25",
+      "file": "csv/delinquency - May'25.csv"
+    },
+    {
+      "name": "Welcome - May'25",
+      "file": "csv/welcome - May'25.csv"
+    }
+  ]
+}
