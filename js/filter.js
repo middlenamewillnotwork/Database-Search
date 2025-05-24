@@ -2,7 +2,29 @@ class FilterManager {
     constructor(tableManager) {
         this.tableManager = tableManager;
         this.activeFilters = new Map();
+        this.elements = {};
         this.initialize();
+    }
+    
+    // Helper to escape HTML special characters
+    escapeHtml(unsafe) {
+        if (unsafe === null || unsafe === undefined) return '';
+        return String(unsafe)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+    
+    // Helper to create a valid HTML ID from a string
+    escapeId(unsafe) {
+        if (unsafe === null || unsafe === undefined) return '';
+        return String(unsafe)
+            .toLowerCase()
+            .replace(/[^a-z0-9_-]/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
     }
 
     initialize() {
@@ -98,6 +120,19 @@ class FilterManager {
             return;
         }
 
+        // Track which sections are currently open
+        const openSections = new Set();
+        if (this.elements.filterOptions) {
+            this.elements.filterOptions.querySelectorAll('.filter-option').forEach(option => {
+                const header = option.querySelector('.filter-option-header');
+                const values = option.querySelector('.filter-option-values');
+                if (header && values && (values.classList.contains('visible') || values.style.display === 'block')) {
+                    const headerText = header.querySelector('span')?.textContent;
+                    if (headerText) openSections.add(headerText);
+                }
+            });
+        }
+
         // Get unique column headers
         const headers = this.tableManager.headers || Object.keys(this.tableManager.data[0] || {});
         
@@ -109,14 +144,16 @@ class FilterManager {
             
             // Get filtered unique values for this column based on other active filters
             const values = this.getFilteredValues(header);
+            const isOpen = openSections.has(header);
+            const isApplied = this.activeFilters.has(header) && this.activeFilters.get(header).size > 0;
             
             filterHtml += `
                 <div class="filter-option">
-                    <div class="filter-option-header">
+                    <div class="filter-option-header${isApplied ? ' filter-applied' : ''}">
                         <span>${header}</span>
-                        <span class="toggle-arrow">▼</span>
+                        <span class="toggle-arrow">${isOpen ? '▲' : '▼'}</span>
                     </div>
-                    <div class="filter-option-values">
+                    <div class="filter-option-values${isOpen ? ' visible' : ''}" style="display:${isOpen ? 'block' : 'none'};">
                         ${values.slice(0, 100).map(value => `
                             <div class="filter-value">
                                 <input type="checkbox" id="filter-${header}-${this.escapeId(value)}" 
@@ -136,8 +173,10 @@ class FilterManager {
         // Add event listeners for filter options
         this.elements.filterOptions.querySelectorAll('.filter-option-header').forEach(header => {
             header.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent the click from closing the dropdown
                 const values = header.nextElementSibling;
                 values.classList.toggle('visible');
+                values.style.display = values.classList.contains('visible') ? 'block' : 'none';
                 header.querySelector('.toggle-arrow').textContent = 
                     values.classList.contains('visible') ? '▲' : '▼';
             });
@@ -145,7 +184,10 @@ class FilterManager {
 
         // Add change listeners for checkboxes
         this.elements.filterOptions.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', (e) => this.handleFilterChange(e));
+            checkbox.addEventListener('change', (e) => {
+                e.stopPropagation(); // Prevent the click from closing the dropdown
+                this.handleFilterChange(e);
+            });
         });
     }
     
@@ -188,43 +230,205 @@ class FilterManager {
             }
         });
         
-        // Get unique values for the specified column
-        const uniqueValues = [...new Set(filteredData.map(item => item[column]))];
+        // If no data remains after filtering, return empty array
+        if (filteredData.length === 0) {
+            return [];
+        }
         
-        // Sort values (you can customize the sorting logic as needed)
+        // Get unique values for the specified column
+        let uniqueValues = [...new Set(filteredData.map(item => item[column]))];
+        
+        // Remove null/undefined/empty values
+        uniqueValues = uniqueValues.filter(value => 
+            value !== null && value !== undefined && value !== ''
+        );
+        
+        // Determine data type for sorting
+        const sampleValue = uniqueValues.find(val => val !== null && val !== undefined);
+        
+        if (sampleValue === undefined) return [];
+        
+        // Sort based on data type
+        const type = this.determineType(sampleValue);
+        
         return uniqueValues.sort((a, b) => {
+            // Handle null/undefined values
             if (a === null || a === undefined) return 1;
             if (b === null || b === undefined) return -1;
-            return String(a).localeCompare(String(b));
+            
+            // Sort based on detected type
+            switch (type) {
+                case 'number':
+                    return (parseFloat(a) || 0) - (parseFloat(b) || 0);
+                    
+                case 'date':
+                    return new Date(a) - new Date(b);
+                    
+                case 'boolean':
+                    return (a === b) ? 0 : a ? -1 : 1;
+                    
+                default: // string and others
+                    return String(a).localeCompare(String(b), undefined, {sensitivity: 'base'});
+            }
         });
+    }
+    
+    // Helper to determine data type of values in a column
+    determineType(value) {
+        if (value === null || value === undefined) return 'string';
+        
+        // Check if it's a boolean
+        if (value === true || value === false) return 'boolean';
+        
+        // Check if it's a number
+        if (!isNaN(parseFloat(value)) && isFinite(value)) return 'number';
+        
+        // Check if it's a date
+        const date = new Date(value);
+        if (date.toString() !== 'Invalid Date' && !isNaN(date)) {
+            // Additional check to avoid false positives for numbers
+            if (String(parseFloat(value)) === String(value)) return 'number';
+            return 'date';
+        }
+        
+        // Default to string
+        return 'string';
     }
 
     handleFilterChange(e) {
+        // Prevent the click from bubbling up to the document
+        e.stopPropagation();
+        e.preventDefault();
+        
         const checkbox = e.target;
         const column = checkbox.dataset.column;
         const value = checkbox.value;
         
+        // Update active filters
         if (!this.activeFilters.has(column)) {
             this.activeFilters.set(column, new Set());
         }
         
-        const columnFilters = this.activeFilters.get(column);
-        
         if (checkbox.checked) {
-            columnFilters.add(value);
+            this.activeFilters.get(column).add(value);
         } else {
-            columnFilters.delete(value);
-            if (columnFilters.size === 0) {
+            this.activeFilters.get(column).delete(value);
+            if (this.activeFilters.get(column).size === 0) {
                 this.activeFilters.delete(column);
             }
         }
-        
-        // Update the filter dropdown to reflect the new filter state
-        this.initializeFilters();
-        
-        // Update the active filters display and apply the filters
-        this.updateActiveFiltersDisplay();
+
+        // Apply filters immediately
         this.applyFilters();
+        
+        // Update active filters display
+        this.updateActiveFiltersDisplay();
+        
+        // Ensure the dropdown stays visible
+        if (!this.isDropdownVisible()) {
+            this.elements.filterDropdown.classList.add('visible');
+        }
+        
+        // Refresh filter options without closing the dropdown
+        this.initializeFilters();
+    }
+    
+    // Rebuild filter options while maintaining open/closed state of sections
+    rebuildFilterOptions(openSections) {
+        // Store scroll position
+        const scrollTop = this.elements.filterOptions.scrollTop;
+        
+        // Get current filter values
+        const headers = this.tableManager.headers || Object.keys(this.tableManager.data[0] || {});
+        let filterHtml = '';
+        
+        headers.forEach(header => {
+            if (!header) return;
+            
+            const values = this.getFilteredValues(header);
+            const isOpen = openSections.has(header);
+            
+            filterHtml += `
+                <div class="filter-option">
+                    <div class="filter-option-header">
+                        <span>${header}</span>
+                        <span class="toggle-arrow">${isOpen ? '▼' : '▶'}</span>
+                    </div>
+                    <div class="filter-option-values" style="${isOpen ? 'display: block;' : 'display: none;'}">
+                        ${values.slice(0, 100).map(value => `
+                            <div class="filter-value">
+                                <input type="checkbox" id="filter-${header}-${this.escapeId(value)}" 
+                                       data-column="${header}" value="${value}"
+                                       ${this.isFilterActive(header, value) ? 'checked' : ''}>
+                                <label for="filter-${header}-${this.escapeId(value)}">${value || '(empty)'}</label>
+                            </div>
+                        `).join('')}
+                        ${values.length > 100 ? '<div class="text-muted">...and ' + (values.length - 100) + ' more</div>' : ''}
+                    </div>
+                </div>`;
+        });
+        
+        // Update the DOM
+        this.elements.filterOptions.innerHTML = filterHtml;
+        
+        // Restore scroll position
+        this.elements.filterOptions.scrollTop = scrollTop;
+        
+        // Reattach event listeners
+        this.attachFilterOptionListeners();
+    }
+    
+    // Update checkbox states without reinitializing the entire dropdown
+    updateCheckboxStates() {
+        this.elements.filterOptions.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            const column = checkbox.dataset.column;
+            const value = checkbox.value;
+            checkbox.checked = this.isFilterActive(column, value);
+        });
+    }
+    
+    // Attach event listeners to filter options
+    attachFilterOptionListeners() {
+        try {
+            // Remove existing listeners by cloning and replacing elements
+            // For filter option headers
+            this.elements.filterOptions.querySelectorAll('.filter-option-header').forEach(header => {
+                const newHeader = header.cloneNode(true);
+                header.parentNode.replaceChild(newHeader, header);
+                
+                newHeader.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const values = newHeader.nextElementSibling;
+                    const isVisible = window.getComputedStyle(values).display === 'block';
+                    values.style.display = isVisible ? 'none' : 'block';
+                    const arrow = newHeader.querySelector('.toggle-arrow');
+                    if (arrow) {
+                        arrow.textContent = isVisible ? '▶' : '▼';
+                    }
+                });
+            });
+
+            // For checkboxes
+            this.elements.filterOptions.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                const newCheckbox = checkbox.cloneNode(true);
+                checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+                
+                newCheckbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    // Store the current state to prevent infinite loops
+                    const currentState = {
+                        column: newCheckbox.dataset.column,
+                        value: newCheckbox.value,
+                        checked: newCheckbox.checked
+                    };
+                    
+                    // Call handleFilterChange with the event
+                    this.handleFilterChange(e, currentState);
+                });
+            });
+        } catch (error) {
+            console.error('Error attaching filter option listeners:', error);
+        }
     }
     
     updateActiveFiltersDisplay() {
@@ -348,16 +552,20 @@ class FilterManager {
         
         // Apply active filters
         this.activeFilters.forEach((values, column) => {
-            filteredData = filteredData.filter(item => 
+            filteredData = filteredData.filter(item =>
                 values.has(String(item[column]))
             );
         });
-        
-        // Update the table with filtered data
-        this.tableManager.filteredData = filteredData;
-        this.tableManager.currentPage = 1;
-        this.tableManager.updateTable();
-        this.tableManager.updatePagination();
+        this.tableManager.baseFilteredData = filteredData;
+        // If there is an active search query, apply it to filtered data
+        if (this.tableManager.searchQuery && this.tableManager.searchQuery.length > 0) {
+            this.tableManager.filterData(this.tableManager.searchQuery);
+        } else {
+            this.tableManager.filteredData = filteredData;
+            this.tableManager.currentPage = 1;
+            this.tableManager.updateTable();
+            this.tableManager.updatePagination();
+        }
     }
 }
 

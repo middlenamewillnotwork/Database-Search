@@ -9,6 +9,9 @@ class SearchManager {
         this.debounceTimer = null;
         this.debounceDelay = 300;
         
+        // Track the current search query
+        this.tableManager.searchQuery = '';
+        
         if (this.searchInput && this.suggestionsEl) {
             this.initialize();
         }
@@ -31,6 +34,7 @@ class SearchManager {
         
         this.debounceTimer = setTimeout(() => {
             const query = this.searchInput.value.trim();
+            this.tableManager.searchQuery = query; // Keep the current search query in sync
             this.tableManager.filterData(query);
             
             // Show suggestions if there's a query
@@ -44,7 +48,7 @@ class SearchManager {
     
     // Show search suggestions
     showSuggestions(query = '') {
-        if (!this.tableManager.data || this.tableManager.data.length === 0) {
+        if (!this.tableManager.baseFilteredData || this.tableManager.baseFilteredData.length === 0) {
             this.hideSuggestions();
             return;
         }
@@ -63,7 +67,7 @@ class SearchManager {
         const maxSuggestions = 10;
         
         // Search through data for matching values
-        this.tableManager.data.forEach(item => {
+        this.tableManager.baseFilteredData.forEach(item => {
             if (suggestions.size >= maxSuggestions) return;
             
             Object.values(item).forEach(value => {
@@ -114,6 +118,7 @@ class SearchManager {
     // Clear search
     clearSearch() {
         this.searchInput.value = '';
+        this.tableManager.searchQuery = '';
         this.tableManager.filterData('');
         this.hideSuggestions();
     }

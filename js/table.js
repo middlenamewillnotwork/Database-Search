@@ -11,12 +11,14 @@ class TableManager {
         this.loadingEl = document.getElementById('loading');
         
         this.data = [];
+        this.baseFilteredData = [];
         this.filteredData = [];
         this.currentPage = 1;
         this.rowsPerPage = 50;
         this.sortColumn = null;
         this.sortDirection = 'asc';
         this.headers = [];
+        this.searchQuery = '';
     }
     
     initialize() {
@@ -89,6 +91,7 @@ class TableManager {
             this.data = data;
         }
         
+        this.baseFilteredData = [...this.data];
         this.filteredData = [...this.data];
         this.headers = this.data.length > 0 ? Object.keys(this.data[0]) : [];
         this.currentPage = 1;
@@ -99,11 +102,13 @@ class TableManager {
     
     // Filter data based on search query
     filterData(query) {
+        // Always search within baseFilteredData (i.e. after filters, before search)
+        const sourceData = this.baseFilteredData && this.baseFilteredData.length ? this.baseFilteredData : this.data;
         if (!query) {
-            this.filteredData = [...this.data];
+            this.filteredData = [...sourceData];
         } else {
             const lowerQuery = query.toLowerCase();
-            this.filteredData = this.data.filter(item => 
+            this.filteredData = sourceData.filter(item => 
                 Object.values(item).some(value => 
                     String(value).toLowerCase().includes(lowerQuery)
                 )

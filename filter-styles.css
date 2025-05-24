@@ -45,6 +45,12 @@
     background-color: #0056b3;
 }
 
+.filter-option-header.filter-applied {
+    background: #d4f8e8; /* light green */
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
 #filterBtn i {
     margin-right: 5px;
 }
@@ -54,7 +60,7 @@
     position: absolute;
     top: calc(100% + 5px);
     right: 0;
-    width: 300px;
+    width: 400px;
     max-height: 400px;
     overflow-y: auto;
     background: white;
