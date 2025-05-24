@@ -458,8 +458,8 @@ tr:hover {
 
 .close {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 5px;
+    right: 5px;
     font-size: 24px;
     font-weight: bold;
     cursor: pointer;
@@ -493,6 +493,7 @@ tr:hover {
     border-bottom: 1px solid #eee;
     vertical-align: middle;
     position: relative;
+    text-wrap-mode:wrap;
 }
 
 .modal-table th {

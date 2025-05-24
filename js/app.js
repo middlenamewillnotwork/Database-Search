@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const response = await fetch('config.json');
             if (response.ok) {
                 config = await response.json();
-                console.log('Loaded configuration:', config);
+                // Configuration loaded successfully
                 
                 // Populate data source list
                 if (config.sheets && config.sheets.length > 0) {
@@ -80,10 +80,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Load the configuration
     await loadConfig();
     
-    // Debug: Log elements
-    console.log('Initializing data source dropdown');
-    console.log('fetchDataBtn:', fetchDataBtn);
-    console.log('dataSourceList:', dataSourceList);
+    // Initialize dropdown elements
     
     // Initialize dropdown state
     let isDropdownOpen = false;
@@ -92,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (fetchDataBtn && dataSourceList) {
         // Function to show dropdown
         const showDropdown = () => {
-            console.log('Showing dropdown');
+            // Showing dropdown
             dataSourceList.style.display = 'block';
             setTimeout(() => {
                 dataSourceList.classList.add('show');
@@ -250,7 +247,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     if (source && source.name) {
                         const header = document.querySelector('h1');
                         if (header) {
-                            header.innerHTML = `Database Search - <span class="data-source-name">${source.name}</span>`;
+                            header.innerHTML = `Search Your Data In - <span class="data-source-name">${source.name}</span>`;
                         }
                         
                         // Update the selected data source index
@@ -357,7 +354,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     // Update the header
                     const header = document.querySelector('h1');
                     if (header) {
-                        header.innerHTML = `Database Search - <span class="data-source-name">${selectedSheet.name}</span>`;
+                        header.innerHTML = `Search Your Data In - <span class="data-source-name">${selectedSheet.name}</span>`;
                     }
                     
                     // Show success message

@@ -30,6 +30,26 @@ class TableManager {
         
         // Setup back to top button
         this.setupBackToTopButton();
+        
+        // Add event listeners for CTRL/CMD key detection
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                document.body.classList.add('ctrl-active');
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (!e.ctrlKey && !e.metaKey) {
+                document.body.classList.remove('ctrl-active');
+            }
+        });
+        
+        // Remove ctrl-active class when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.ctrlKey && !e.metaKey) {
+                document.body.classList.remove('ctrl-active');
+            }
+        });
     }
     
     // Setup Back to Top button
@@ -225,11 +245,44 @@ class TableManager {
                     Object.values(row).forEach(cellValue => {
                         const td = document.createElement('td');
                         td.textContent = cellValue !== null && cellValue !== undefined ? cellValue : '';
+                        
+                        // Add inline styles for cell
+                        td.style.maxWidth = '650px';
+                        td.style.whiteSpace = 'nowrap';
+                        td.style.overflow = 'hidden';
+                        td.style.textOverflow = 'ellipsis';
+                        
+                        // Add a class that can be toggled for wrapping
+                        td.addEventListener('dblclick', function() {
+                            this.style.whiteSpace = this.style.whiteSpace === 'normal' ? 'nowrap' : 'normal';
+                            this.style.wordWrap = this.style.wordWrap === 'break-word' ? 'normal' : 'break-word';
+                        });
+                        
                         tr.appendChild(td);
                     });
                     
-                    // Add click handler for row details
-                    tr.addEventListener('click', () => this.showRowDetails(row));
+                    // Add click handler for row details - only show on CTRL+Click
+                    tr.addEventListener('click', (event) => {
+                        if (event.ctrlKey || event.metaKey) { // metaKey for Mac's Command key
+                            this.showRowDetails(row);
+                            event.preventDefault(); // Prevent text selection
+                        }
+                    });
+                    
+                    // Add hover effect when CTRL/CMD is pressed
+                    tr.addEventListener('mouseover', (event) => {
+                        if (event.ctrlKey || event.metaKey) {
+                            tr.style.cursor = 'pointer';
+                            tr.style.backgroundColor = '#f5f5f5';
+                        }
+                    });
+                    
+                    tr.addEventListener('mouseout', (event) => {
+                        if (event.ctrlKey || event.metaKey) {
+                            tr.style.cursor = '';
+                            tr.style.backgroundColor = '';
+                        }
+                    });
                     
                     this.tableBody.appendChild(tr);
                 });
