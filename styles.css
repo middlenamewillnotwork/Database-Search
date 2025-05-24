@@ -323,19 +323,20 @@ th, td {
     text-align: left;
     border-bottom: 1px solid var(--border-color);
     border-left : 1px solid var(--border-color);
+    border-right : 1px solid var(--border-color);
+    border-top : 1px solid var(--border-color);
     font-size: 13px;
     text-wrap-mode: nowrap;
 }
 
 th {
-    background-color: var(--light-color);
+    background-color: #a6c4e2;
     font-weight: 600;
     cursor: pointer;
     user-select: none;
     text-align: center; 
     text-wrap-mode: nowrap;
     padding: 8px;
-    border-top : 1px solid var(--border-color);
 }
 
 th.sort-asc::after {
