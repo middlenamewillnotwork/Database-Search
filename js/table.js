@@ -53,18 +53,26 @@ class TableManager {
     
     // Set the data and initialize the table
     setData(data) {
-        if (!data || data.length === 0) return;
-        
-        this.data = data;
-        this.filteredData = [...data];
-        
-        // Extract headers from the first data item
-        if (data.length > 0) {
-            this.headers = Object.keys(data[0]);
-            this.renderHeader();
+        // Handle both old and new data formats
+        if (data && data.data) {
+            // New format: { data: [...], source: {...} }
+            this.data = data.data;
+            // Update the header with the data source info if available
+            if (data.source && data.source.name) {
+                const header = document.querySelector('h1');
+                if (header) {
+                    header.textContent = `Database Search - ${data.source.name}`;
+                }
+            }
+        } else {
+            // Old format: just the data array
+            this.data = data;
         }
         
+        this.filteredData = [...this.data];
+        this.headers = this.data.length > 0 ? Object.keys(this.data[0]) : [];
         this.currentPage = 1;
+        this.renderHeader();
         this.updateTable();
         this.updatePagination();
     }
@@ -362,22 +370,28 @@ class TableManager {
         });
     }
     
+    // Update total records display
+    updateTotalRecords() {
+        if (this.totalRecordsEl) {
+            this.totalRecordsEl.textContent = this.filteredData.length;
+        }
+    }
+    
     // Update page info
     updatePagination() {
         const totalPages = Math.ceil(this.filteredData.length / this.rowsPerPage);
         
         // Update page info
-        this.pageInfo.textContent = `Page ${this.currentPage} of ${totalPages || 1}`;
-        
-        // Update total records display - just the number, label is in HTML
-        const totalRecordsEl = document.getElementById('totalRecords');
-        if (totalRecordsEl) {
-            totalRecordsEl.textContent = this.filteredData.length;
+        if (this.pageInfo) {
+            this.pageInfo.textContent = `Page ${this.currentPage} of ${totalPages || 1}`;
         }
         
+        // Update total records display
+        this.updateTotalRecords();
+        
         // Update button states
-        this.prevBtn.disabled = this.currentPage <= 1;
-        this.nextBtn.disabled = this.currentPage >= totalPages || totalPages === 0;
+        if (this.prevBtn) this.prevBtn.disabled = this.currentPage <= 1;
+        if (this.nextBtn) this.nextBtn.disabled = this.currentPage >= totalPages || totalPages === 0;
         
         // Update page jump controls
         const pageJumpContainer = document.querySelector('.page-jump-container');

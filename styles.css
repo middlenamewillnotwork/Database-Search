@@ -25,7 +25,7 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
     background: white;
     border-radius: 8px;
@@ -38,6 +38,129 @@ header {
     background-color: var(--primary-color);
     color: white;
     padding: 15px 0;
+    position: relative;
+    z-index: 100;
+}
+
+header h1 {
+    font-size: 1.5rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+header .data-source-name {
+    font-weight: normal;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* Data Source List */
+.data-source-container {
+    position: relative;
+    display: inline-block;
+    z-index: 100; /* Lower z-index to stay behind modal */
+    margin-left: 10px;
+}
+
+.data-source-list {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background-color: #1f33cacf;
+    min-width: 300px;
+    border: 1px solid #1a2bb5;
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 2000;
+    max-height: 70vh;
+    overflow-y: auto;
+    transform: translateY(-10px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    display: none; /* Start hidden */
+}
+
+.data-source-list.show {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition: all 0.2s ease;
+}
+
+.data-source-list.show {
+    display: block;
+}
+
+.data-source-list-header {
+    padding: 12px 15px;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background-color: #4a6fa5;
+    color: white;
+}
+
+.data-source-items {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.data-source-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.data-source-item:last-child {
+    border-bottom: none;
+}
+
+.data-source-item:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.data-source-item.active {
+    background-color: rgba(255, 255, 255, 0.25);
+    font-weight: 500;
+    position: relative;
+    padding-left: 30px;
+}
+
+.data-source-item.active::before {
+    content: '✓';
+    position: absolute;
+    left: 12px;
+    font-weight: bold;
+}
+
+/* Add a small arrow to the fetch button */
+#fetchData {
+    position: relative;
+    padding-right: 30px;
+}
+
+#fetchData::after {
+    content: '▼';
+    font-size: 10px;
+    margin-left: 8px;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Adjust header actions for better spacing */
+.header-actions {
+    display: flex;
+    gap: 20px;
+    align-items: center;
 }
 
 .header-content {
@@ -196,9 +319,12 @@ table {
 }
 
 th, td {
-    padding: 12px 15px;
+    padding: 7px 7px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
+    border-left : 1px solid var(--border-color);
+    font-size: 13px;
+    text-wrap-mode: nowrap;
 }
 
 th {
@@ -206,6 +332,10 @@ th {
     font-weight: 600;
     cursor: pointer;
     user-select: none;
+    text-align: center; 
+    text-wrap-mode: nowrap;
+    padding: 8px;
+    border-top : 1px solid var(--border-color);
 }
 
 th.sort-asc::after {
@@ -295,35 +425,7 @@ tr:hover {
     margin-top: 10px;
 }
 
-/* Sheet List Styles */
-.sheet-list {
-    max-height: 400px;
-    overflow-y: auto;
-    margin-top: 15px;
-}
-
-.sheet-item {
-    padding: 10px 15px;
-    margin: 5px 0;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.sheet-item:hover {
-    background-color: #e9ecef;
-    transform: translateX(5px);
-}
-
-.sheet-item.active {
-    background-color: #007bff;
-    color: white;
-    border-color: #0056b3;
-}
-
-/* Modal styles */
+/* Modal */
 .modal {
     display: none;
     position: fixed;
@@ -333,12 +435,14 @@ tr:hover {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
     z-index: 1000;
-    overflow-y: auto;
+    overflow: auto;
     padding: 20px 0;
     box-sizing: border-box;
 }
 
 .modal-content {
+    position: relative;
+    z-index: 1001;
     background-color: #fff;
     margin: 2% auto;
     padding: 25px 30px;
@@ -490,6 +594,39 @@ tr:hover {
 
 .copy-btn.copied i::before {
     content: '\f00c';
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        padding: 20px 15px;
+    }
+    
+    .modal-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .modal-table th,
+    .modal-table td {
+        padding: 10px 8px;
+        font-size: 14px;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .modal-content {
+        max-width: 95%;
+        padding: 20px 15px;
+    }
 }
 
 /* Responsive adjustments */

@@ -1,61 +1,172 @@
-// Global variables
-let tableManager, searchManager;
-
-// Set up modal close buttons
-function setupModalCloseButtons() {
-    const modals = document.querySelectorAll('.modal');
-    const closeButtons = document.querySelectorAll('.close');
-    
-    closeButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const modal = button.closest('.modal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-        });
-    });
-    
-    window.addEventListener('click', (event) => {
-        modals.forEach(modal => {
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
-    });
-}
-
 // Initialize the application when the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Initialize managers
-    tableManager = window.tableManager || new TableManager();
-    searchManager = window.searchManager || new SearchManager(tableManager);
+    const tableManager = window.tableManager || new TableManager();
+    const searchManager = window.searchManager || new SearchManager(tableManager);
     
     // Store references globally
     window.tableManager = tableManager;
     window.searchManager = searchManager;
     
-    // Initialize the table manager
-    if (window.tableManager) {
-        window.tableManager.initialize();
-    }
+    // Initialize table manager
+    tableManager.initialize();
     
-    // Set up event listeners
-    setupEventListeners();
-    
-    // Set up modal close buttons
-    setupModalCloseButtons();
-    
-    // Load data from localStorage if available
-    loadFromLocalStorage();
-});
-
-// Set up event listeners
-function setupEventListeners() {
     // Get DOM elements
     const fetchDataBtn = document.getElementById('fetchData');
+    const dataSourceSelect = document.getElementById('dataSourceSelect');
     const loadingEl = document.getElementById('loading');
     const modal = document.getElementById('detailModal');
     const closeModal = document.querySelector('.close');
+    
+    // Load configuration
+    let config = { sheets: [] };
+    let selectedDataSourceIndex = -1;
+    const dataSourceList = document.getElementById('dataSourceList');
+    const dataSourceItems = document.querySelector('.data-source-items');
+    
+    async function loadConfig() {
+        try {
+            const response = await fetch('config.json');
+            if (response.ok) {
+                config = await response.json();
+                console.log('Loaded configuration:', config);
+                
+                // Populate data source list
+                if (config.sheets && config.sheets.length > 0) {
+                    dataSourceItems.innerHTML = ''; // Clear any existing items
+                    
+                    config.sheets.forEach((sheet, index) => {
+                        if (sheet.name && sheet.url) {
+                            const item = document.createElement('div');
+                            item.className = 'data-source-item';
+                            item.textContent = sheet.name;
+                            item.dataset.index = index;
+                            
+                            item.addEventListener('click', () => {
+                                // Remove active class from all items
+                                document.querySelectorAll('.data-source-item').forEach(i => {
+                                    i.classList.remove('active');
+                                });
+                                
+                                // Set active class on clicked item
+                                item.classList.add('active');
+                                selectedDataSourceIndex = index;
+                                
+                                // Hide the list
+                                dataSourceList.classList.remove('show');
+                                
+                                // Set the selected data source
+                                selectedDataSourceIndex = index;
+                                // Disable button during fetch
+                                if (fetchDataBtn) {
+                                    fetchDataBtn.disabled = true;
+                                }
+                                // Automatically fetch data for the selected source
+                                fetchDataFromGoogleSheets();
+                            });
+                            
+                            dataSourceItems.appendChild(item);
+                        }
+                    });
+                }
+            } else {
+                console.error('Failed to load config.json');
+            }
+        } catch (error) {
+            console.error('Error loading configuration:', error);
+        }
+    }
+    
+    // Load the configuration
+    await loadConfig();
+    
+    // Debug: Log elements
+    console.log('Initializing data source dropdown');
+    console.log('fetchDataBtn:', fetchDataBtn);
+    console.log('dataSourceList:', dataSourceList);
+    
+    // Initialize dropdown state
+    let isDropdownOpen = false;
+    
+    // Toggle data source list when fetch button is clicked
+    if (fetchDataBtn && dataSourceList) {
+        // Function to show dropdown
+        const showDropdown = () => {
+            console.log('Showing dropdown');
+            dataSourceList.style.display = 'block';
+            setTimeout(() => {
+                dataSourceList.classList.add('show');
+                isDropdownOpen = true;
+                document.body.classList.add('dropdown-open');
+            }, 10);
+        };
+        
+        // Function to hide dropdown
+        const hideDropdown = () => {
+            console.log('Hiding dropdown');
+            dataSourceList.classList.remove('show');
+            isDropdownOpen = false;
+            document.body.classList.remove('dropdown-open');
+            
+            // Remove display:block after transition
+            setTimeout(() => {
+                if (!isDropdownOpen) {
+                    dataSourceList.style.display = '';
+                }
+            }, 200);
+        };
+        
+        // Toggle dropdown on button click
+        const toggleDropdown = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (isDropdownOpen) {
+                hideDropdown();
+            } else {
+                showDropdown();
+            }
+        };
+        
+        // Add click handler to the button
+        fetchDataBtn.addEventListener('click', toggleDropdown);
+        
+        // Close when clicking outside
+        document.addEventListener('mousedown', (e) => {
+            const isClickInside = dataSourceList.contains(e.target) || fetchDataBtn.contains(e.target);
+            if (!isClickInside && isDropdownOpen) {
+                hideDropdown();
+            }
+        });
+        
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isDropdownOpen) {
+                hideDropdown();
+            }
+        });
+    }
+    
+    // Close the dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (dataSourceList && 
+            !dataSourceList.contains(e.target) && 
+            e.target !== fetchDataBtn && 
+            !fetchDataBtn.contains(e.target)) {
+            dataSourceList.classList.remove('show');
+        }
+    });
+    
+    // Handle clicks on data source items
+    if (dataSourceItems) {
+        dataSourceItems.addEventListener('click', function(e) {
+            const item = e.target.closest('.data-source-item');
+            if (item) {
+                e.stopPropagation();
+                // The rest of the item click handling is done in the loadConfig function
+            }
+        });
+    }
     
     // Show notification
     function showNotification(message, type = 'info') {
@@ -82,7 +193,7 @@ function setupEventListeners() {
             if (char === '"') {
                 inQuotes = !inQuotes;
             } else if (char === ',' && !inQuotes) {
-                values.push(currentValue.trim().replace(/^"/, '').replace(/"$/, ''));
+                values.push(currentValue.trim().replace(/^"|"$/g, ''));
                 currentValue = '';
             } else {
                 currentValue += char;
@@ -90,7 +201,7 @@ function setupEventListeners() {
         }
         
         // Add the last value
-        values.push(currentValue.trim().replace(/^"/, '').replace(/"$/, ''));
+        values.push(currentValue.trim().replace(/^"|"$/g, ''));
         
         return values;
     }
@@ -101,7 +212,7 @@ function setupEventListeners() {
         if (lines.length < 2) return [];
         
         // Extract headers (first line)
-        const headers = lines[0].split(',').map(h => h.trim().replace(/^"/, '').replace(/"$/, ''));
+        const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
         
         // Process data rows
         const data = [];
@@ -127,10 +238,30 @@ function setupEventListeners() {
         try {
             const storedData = window.storageManager.getData();
             
-            if (storedData && storedData.data && storedData.data.length > 0) {
-                tableManager.setData(storedData.data);
-                console.log('Loaded data from local storage');
-                return true;
+            if (storedData) {
+                // Handle both old and new data formats
+                const data = storedData.data || storedData;
+                const source = storedData.source;
+                
+                if (data && data.length > 0) {
+                    tableManager.setData(data);
+                    
+                    // Update the header with the stored source name if available
+                    if (source && source.name) {
+                        const header = document.querySelector('h1');
+                        if (header) {
+                            header.innerHTML = `Database Search - <span class="data-source-name">${source.name}</span>`;
+                        }
+                        
+                        // Update the selected data source index
+                        if (source.index !== undefined) {
+                            selectedDataSourceIndex = source.index;
+                        }
+                    }
+                    
+                    console.log('Loaded data from local storage');
+                    return true;
+                }
             }
         } catch (error) {
             console.error('Error loading from localStorage:', error);
@@ -139,94 +270,50 @@ function setupEventListeners() {
         return false;
     }
     
-    // Function to show loading overlay
-    function showLoading() {
+    // Function to manage loading overlay
+    function showLoading(show = true) {
         const overlay = document.getElementById('loadingOverlay');
         if (overlay) {
-            overlay.style.display = 'flex';
+            overlay.style.display = show ? 'flex' : 'none';
         }
     }
 
-    // Function to hide loading overlay
+    // Alias for showLoading(false) for backward compatibility
     function hideLoading() {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) {
-            overlay.style.display = 'none';
-        }
+        showLoading(false);
     }
 
     // Fetch data from Google Sheets
     function fetchDataFromGoogleSheets() {
-        showLoading();
-        
-        // Get the URL from the link file
-        fetch('link')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.text();
-            })
-            .then(content => {
-                // Get the first URL from the link file
-                const url = content.trim();
-                if (!url.startsWith('http')) {
-                    throw new Error('Invalid URL in the link file');
-                }
-                
-                // Parse the URL and construct the base URL
-                const urlObj = new URL(url);
-                const baseUrl = `${urlObj.origin}${urlObj.pathname}`;
-                
-                // Check if this is a Google Sheets URL
-                if (url.includes('docs.google.com/spreadsheets/')) {
-                    // For Google Sheets, we'll use the direct export URL
-                    // Extract the document ID from the URL
-                    const docIdMatch = url.match(/\/d\/([^\/]+)/);
-                    if (!docIdMatch) {
-                        throw new Error('Could not extract document ID from Google Sheets URL');
-                    }
-                    const docId = docIdMatch[1];
-                    
-                    // Construct the export URL for the first sheet
-                    const exportUrl = `https://docs.google.com/spreadsheets/d/${docId}/export?format=csv&gid=0`;
-                    
-                    // For now, we'll just use the first sheet
-                    // In a real implementation, you might want to fetch the sheet list first
-                    return fetchCSVData(exportUrl);
-                } else {
-                    // For direct CSV URLs, use as is
-                    return fetchCSVData(url);
-                }
-            })
-            .catch(error => {
-                console.error('Error in fetchDataFromGoogleSheets:', error);
-                showNotification(`Error: ${error.message}`, 'error');
-                hideLoading();
-            });
-    }
-    
+        if (selectedDataSourceIndex === -1 || !config.sheets[selectedDataSourceIndex]) {
+            return;
+        }
 
-    // Show sheet selection modal
-    function showSheetSelection(baseUrl) {
-        return new Promise((resolve) => {
-            const sheetModal = document.getElementById('sheetModal');
-            const sheetList = document.getElementById('sheetList');
-            
-            // Show loading message
-            sheetList.innerHTML = '<div class="loading">Loading sheets...</div>';
-            sheetModal.style.display = 'block';
-            
-            // Create a clean URL with minimal parameters
-            const metadataUrl = `${baseUrl}?gid=0&output=csv`;
-            
-            // Use fetch with minimal headers
-            fetch(metadataUrl, {
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
-            })
+        // If no data source is selected, show the list
+        if (selectedDataSourceIndex === -1) {
+            showDataSourceList();
+            return;
+        }
+
+        const selectedSheet = config.sheets[selectedDataSourceIndex];
+        const sheetUrl = selectedSheet.url;
+        
+        if (!sheetUrl) {
+            throw new Error('No URL configured for the selected data source');
+        }
+        
+        // Show loading states
+        showLoading(true);
+        if (tableManager) {
+            tableManager.showLoading();
+        }
+        
+        // Disable button during fetch
+        if (fetchDataBtn) {
+            fetchDataBtn.disabled = true;
+        }
+
+        fetch(sheetUrl)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -234,94 +321,68 @@ function setupEventListeners() {
                 return response.text();
             })
             .then(csvData => {
-                // Extract sheet names from the first row
-                const firstLine = csvData.split('\n')[0];
-                const headers = firstLine.split(',');
-                
-                // Clear loading message
-                sheetList.innerHTML = '';
-                
-                // Add sheet items
-                headers.forEach((sheetName, index) => {
-                    if (sheetName.trim()) {
-                        const sheetItem = document.createElement('div');
-                        sheetItem.className = 'sheet-item';
-                        sheetItem.textContent = sheetName.trim();
-                        sheetItem.onclick = () => {
-                            // Update the main title with the sheet name
-                            const mainTitle = document.getElementById('mainTitle');
-                            if (mainTitle) {
-                                mainTitle.textContent = `Search Your Data In - ${sheetName.trim()}`;
-                            }
-                            
-                            // Close the modal and resolve with the selected sheet URL
-                            sheetModal.style.display = 'none';
-                            resolve(`${baseUrl}?gid=${index}&output=csv`);
-                        };
-                        sheetList.appendChild(sheetItem);
+                try {
+                    // Parse CSV data
+                    const results = Papa.parse(csvData, {
+                        header: true,
+                        skipEmptyLines: true,
+                        transform: (value) => value === '' ? null : value
+                    });
+
+                    if (results.errors && results.errors.length > 0) {
+                        throw new Error('Error parsing CSV: ' + results.errors[0].message);
                     }
-                });
+
+                    const data = results.data;
+
+                    if (!data || data.length === 0) {
+                        throw new Error('No data found in the selected sheet.');
+                    }
+
+                    // Store the data in localStorage with source info
+                    const dataToStore = {
+                        data: data,
+                        source: {
+                            name: selectedSheet.name,
+                            index: selectedDataSourceIndex,
+                            timestamp: new Date().toISOString()
+                        }
+                    };
+                    
+                    window.storageManager.saveData(dataToStore);
+                    
+                    // Update the table with new data
+                    tableManager.setData(data);
+                    
+                    // Update the header
+                    const header = document.querySelector('h1');
+                    if (header) {
+                        header.innerHTML = `Database Search - <span class="data-source-name">${selectedSheet.name}</span>`;
+                    }
+                    
+                    // Show success message
+                    showNotification(`Data loaded successfully from ${selectedSheet.name}`, 'success');
+                    
+                    return data;
+                } catch (error) {
+                    console.error('Error processing data:', error);
+                    throw error; // Re-throw to be caught by the catch block
+                }
             })
             .catch(error => {
-                console.error('Error fetching sheet names:', error);
-                sheetList.innerHTML = `
-                    <div class="error">
-                        Error loading sheets. ${error.message}
-                        <button onclick="window.location.reload()" class="btn" style="margin-top: 10px;">
-                            Try Again
-                        </button>
-                    </div>`;
-                resolve(null);
+                console.error('Error fetching data:', error);
+                showNotification(`Error: ${error.message}`, 'error');
+            })
+            .finally(() => {
+                // Always execute cleanup
+                if (fetchDataBtn) {
+                    fetchDataBtn.disabled = false;
+                }
+                showLoading(false);
+                if (tableManager) {
+                    tableManager.hideLoading();
+                }
             });
-        });
-    }
-    
-    // Fetch CSV data from URL with minimal headers
-    function fetchCSVData(url) {
-        // Clean up URL to prevent header size issues
-        const cleanUrl = new URL(url);
-        cleanUrl.searchParams.forEach((value, key) => {
-            if (key !== 'gid' && key !== 'output') {
-                cleanUrl.searchParams.delete(key);
-            }
-        });
-        
-        return fetch(cleanUrl.toString(), {
-            headers: {
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.text();
-        })
-        .then(csvData => {
-            // Parse CSV data
-            const data = parseCSV(csvData);
-            
-            // Update the table with the new data
-            if (tableManager && typeof tableManager.setData === 'function') {
-                tableManager.setData(data);
-            }
-            
-            // Save to localStorage
-            if (window.storageManager && typeof window.storageManager.setData === 'function') {
-                window.storageManager.setData(data);
-            }
-            
-            // Show success message
-            showNotification('Data loaded successfully!', 'success');
-            
-            return data;
-        })
-        .catch(error => {
-            console.error('Error fetching CSV data:', error);
-            showNotification(`Error loading data: ${error.message}`, 'error');
-            throw error; // Re-throw to be caught by the caller
-        });
     }
     
     // Close modal when clicking the close button
@@ -340,14 +401,25 @@ function setupEventListeners() {
         });
     }
     
-    // Add event listener for fetch data button
+    // Add event listener for fetch data button - only to toggle the dropdown
     if (fetchDataBtn) {
-        fetchDataBtn.addEventListener('click', fetchDataFromGoogleSheets);
+        fetchDataBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dataSourceList.classList.toggle('show');
+        });
     }
     
     // Try to load data from localStorage on page load
-    if (!loadFromLocalStorage()) {
+    const loadedFromStorage = loadFromLocalStorage();
+    if (loadedFromStorage) {
+        // If we have a last selected data source, select it
+        const lastSelected = localStorage.getItem('lastSelectedDataSource');
+        if (lastSelected && dataSourceSelect) {
+            dataSourceSelect.value = lastSelected;
+            fetchDataBtn.disabled = false;
+        }
+    } else {
         // No data in localStorage, show message
-        console.log('No data found in localStorage. Click "Fetch Data" to load from Google Sheets.');
+        console.log('No data found in localStorage. Select a data source and click "Fetch Data" to load.');
     }
-}
+});

@@ -7,9 +7,11 @@ class StorageManager {
     // Save data to localStorage
     saveData(data) {
         try {
+            // Check if data already has source info (from fetch)
             const dataToStore = {
-                data: data,
-                timestamp: new Date().getTime()
+                data: data.data || data, // Handle both new and old formats
+                timestamp: new Date().getTime(),
+                source: data.source || null // Include source info if available
             };
             localStorage.setItem(this.storageKey, JSON.stringify(dataToStore));
             return true;
@@ -25,7 +27,14 @@ class StorageManager {
             const storedData = localStorage.getItem(this.storageKey);
             if (!storedData) return null;
             
-            return JSON.parse(storedData);
+            const parsed = JSON.parse(storedData);
+            
+            // For backward compatibility with old format
+            if (!parsed.source && parsed.data) {
+                return parsed.data;
+            }
+            
+            return parsed;
         } catch (error) {
             console.error('Error retrieving data from localStorage:', error);
             return null;
@@ -46,9 +55,13 @@ class StorageManager {
     // Check if data is older than specified hours
     isDataOlderThan(hours) {
         const storedData = this.getData();
-        if (!storedData || !storedData.timestamp) return true;
+        if (!storedData) return true;
         
-        const storedTime = new Date(storedData.timestamp).getTime();
+        // Handle both old and new data formats
+        const timestamp = storedData.timestamp || (storedData.data && storedData.data.timestamp);
+        if (!timestamp) return true;
+        
+        const storedTime = new Date(timestamp).getTime();
         const currentTime = new Date().getTime();
         const hoursInMs = hours * 60 * 60 * 1000;
         
