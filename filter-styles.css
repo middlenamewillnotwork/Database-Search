@@ -1,0 +1,230 @@
+/* Search and Filter Container */
+.search-filter-container {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 10px;
+    margin: 15px 0;
+    width: 100%;
+    align-items: center;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+.search-container {
+    flex: 1;
+    min-width: 0; /* Prevents flex items from overflowing */
+    margin: 0;
+}
+
+.filter-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 100px;
+    height: 40px; /* Match the height of the search input */
+}
+
+#filterBtn {
+    white-space: nowrap;
+    padding: 0 15px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+#filterBtn:hover {
+    background-color: #0056b3;
+}
+
+#filterBtn i {
+    margin-right: 5px;
+}
+
+.filter-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 5px);
+    right: 0;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.filter-dropdown.visible {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.filter-dropdown.visible {
+    display: block;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    font-weight: 500;
+}
+
+.filter-options {
+    padding: 10px;
+}
+
+.filter-option {
+    padding: 2px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.filter-option:last-child {
+    border-bottom: none;
+}
+
+.filter-option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 5px 0;
+}
+
+.filter-option-values {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    padding-left: 15px;
+}
+
+.filter-option-values.visible {
+    max-height: 500px;
+    padding: 2px 0 5px 15px;
+    overflow: scroll;
+}
+
+.filter-value {
+    display: flex;
+    align-items: center;
+    padding: 5px 0;
+    cursor: pointer;
+}
+
+.filter-value input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.active-filters-container {
+    display: none; /* Hidden by default */
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 8px 15px;
+    margin: 4px 0 6px 0;
+    min-height: 38px;
+    transition: all 0.2s ease;
+}
+
+/* Show container only when there are active filters */
+.active-filters-container:not(:empty) {
+    display: flex;
+    border-left: 3px solid #007bff;
+    background-color: #f1f8ff;
+}
+
+.active-filters-title {
+    font-weight: 500;
+    color: #495057;
+    margin-right: 5px;
+}
+
+.filter-tag {
+    display: inline-flex;
+    align-items: center;
+    background: #e9ecef;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 13px;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.filter-tag:hover {
+    background-color: #e2e6ea;
+}
+
+.filter-tag-text {
+    margin-right: 4px;
+}
+
+.filter-tag-remove {
+    cursor: pointer;
+    color: #6c757d;
+    font-weight: bold;
+    padding: 0 2px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.filter-tag-remove:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+.clear-all-btn {
+    margin-left: auto;
+    background: none;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clear-all-btn:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #ff7575;
+    padding: 0 5px;
+    line-height: 1;
+}
+
+.btn-icon:hover {
+    color: #ff0000;
+}

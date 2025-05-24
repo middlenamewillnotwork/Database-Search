@@ -6,6 +6,7 @@
     <title>Database Search</title>
     <link rel="icon" href="icons8-window-search-50.png" type="image/png">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="filter-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -37,10 +38,32 @@
             <div class="loading-text">Fetching data...</div>
         </div>
         
-        <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Search in all columns...">
-            <div id="suggestions" class="suggestions"></div>
+        <!-- Search and Filter Bar -->
+        <div class="search-filter-container">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search in all columns...">
+                <div id="suggestions" class="suggestions"></div>
+            </div>
+            <div class="filter-container">
+                <button id="filterBtn" class="btn">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <div id="filterDropdown" class="filter-dropdown">
+                    <div class="filter-header">
+                        <span>Filter by Column</span>
+                        <button id="closeFilter" class="btn-icon" aria-label="Close filter">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="filterOptions" class="filter-options">
+                        <!-- Filter options will be populated here -->
+                    </div>
+                </div>
+            </div>
         </div>
+        
+        <!-- Active Filters Section -->
+        <div id="activeFilters" class="active-filters-container"></div>
 
         <div class="table-container">
             <div id="loading" class="loading">Click on "Fetch Data" button to load data</div>
@@ -79,6 +102,7 @@
     <script src="js/storage.js"></script>
     <script src="js/table.js"></script>
     <script src="js/search.js"></script>
+    <script src="js/filter.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

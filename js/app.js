@@ -1,15 +1,24 @@
 // Initialize the application when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', async function() {
-    // Initialize managers
+    // Initialize table manager first
     const tableManager = window.tableManager || new TableManager();
-    const searchManager = window.searchManager || new SearchManager(tableManager);
-    
-    // Store references globally
     window.tableManager = tableManager;
+    
+    // Initialize search manager
+    const searchManager = window.searchManager || new SearchManager(tableManager);
     window.searchManager = searchManager;
     
-    // Initialize table manager
+    // Initialize the table
     tableManager.initialize();
+    
+    // Initialize filter manager after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        try {
+            window.filterManager = new FilterManager(tableManager);
+        } catch (error) {
+            console.error('Error initializing FilterManager:', error);
+        }
+    }, 300);
     
     // Get DOM elements
     const fetchDataBtn = document.getElementById('fetchData');
