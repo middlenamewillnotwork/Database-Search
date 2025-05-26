@@ -21,9 +21,20 @@ class SearchManager {
         // Event listeners for search input
         this.searchInput.addEventListener('input', () => this.handleSearchInput());
         this.searchInput.addEventListener('focus', () => this.showSuggestions());
+        
+        // Close suggestions when clicking outside
         document.addEventListener('click', (e) => {
             if (!this.searchInput.contains(e.target) && !this.suggestionsEl.contains(e.target)) {
                 this.hideSuggestions();
+            }
+        });
+        
+        // Handle keyboard events
+        this.searchInput.addEventListener('keydown', (e) => {
+            // Close suggestions on ESC key
+            if (e.key === 'Escape') {
+                this.hideSuggestions();
+                // Don't prevent default to allow other ESC key behaviors to work
             }
         });
     }
