@@ -1,5 +1,6 @@
 class FilterManager {
     constructor(tableManager) {
+        this.expandedSections = new Set(); // Track which sections are expanded
         this.tableManager = tableManager;
         this.activeFilters = new Map();
         this.elements = {};
@@ -163,10 +164,10 @@ class FilterManager {
                             </div>
                         `).join('')}
                         ${values.length > 100 ? `
-                            <div class="show-more-container">
+                            <div class="show-more-container" style="${this.expandedSections.has(header) ? 'display: none;' : ''}">
                                 <a href="#" class="show-more-link" data-header="${header}">Show ${values.length - 100} more...</a>
                             </div>
-                            <div class="remaining-values" style="display: none;">
+                            <div class="remaining-values" style="${this.expandedSections.has(header) ? 'display: block;' : 'display: none;'}">
                                 ${values.slice(100).map(value => `
                                     <div class="filter-value">
                                         <input type="checkbox" id="filter-${header}-${this.escapeId(value)}" 
@@ -192,12 +193,15 @@ class FilterManager {
                 const remainingValues = container.querySelector('.remaining-values');
                 const showMoreContainer = container.querySelector('.show-more-container');
                 
+                // Toggle the expanded state for this section
                 if (remainingValues.style.display === 'none') {
                     remainingValues.style.display = 'block';
                     showMoreContainer.style.display = 'none';
+                    this.expandedSections.add(header);
                 } else {
                     remainingValues.style.display = 'none';
                     showMoreContainer.style.display = 'block';
+                    this.expandedSections.delete(header);
                 }
             });
         });
@@ -335,13 +339,21 @@ class FilterManager {
         const checkbox = e.target;
         const column = checkbox.dataset.column;
         const value = checkbox.value;
+        const wasChecked = checkbox.checked;
+        
+        // Get the current scroll position and active element
+        const filterOptions = this.elements.filterOptions;
+        const scrollContainer = filterOptions.closest('.filter-options-container') || filterOptions;
+        const scrollPosition = scrollContainer.scrollTop;
+        const activeElement = document.activeElement;
+        const activeElementId = activeElement?.id;
         
         // Update active filters
         if (!this.activeFilters.has(column)) {
             this.activeFilters.set(column, new Set());
         }
         
-        if (checkbox.checked) {
+        if (wasChecked) {
             this.activeFilters.get(column).add(value);
         } else {
             this.activeFilters.get(column).delete(value);
@@ -350,7 +362,7 @@ class FilterManager {
             }
         }
 
-        // Apply filters immediately
+        // Apply filters
         this.applyFilters();
         
         // Update active filters display
@@ -361,8 +373,53 @@ class FilterManager {
             this.elements.filterDropdown.classList.add('visible');
         }
         
-        // Refresh filter options without closing the dropdown
+        // Store which sections are currently expanded
+        const expandedSections = new Set();
+        this.elements.filterOptions.querySelectorAll('.filter-option').forEach(option => {
+            const header = option.querySelector('.filter-option-header');
+            const values = option.querySelector('.filter-option-values');
+            if (header && values && (values.classList.contains('visible') || values.style.display === 'block')) {
+                const headerText = header.querySelector('span')?.textContent;
+                if (headerText) expandedSections.add(headerText);
+            }
+        });
+        
+        // Refresh filter options
         this.initializeFilters();
+        
+        // Restore expanded sections
+        if (expandedSections.size > 0) {
+            this.elements.filterOptions.querySelectorAll('.filter-option').forEach(option => {
+                const header = option.querySelector('.filter-option-header span');
+                if (header && expandedSections.has(header.textContent)) {
+                    const values = option.querySelector('.filter-option-values');
+                    const arrow = option.querySelector('.toggle-arrow');
+                    if (values && arrow) {
+                        values.classList.add('visible');
+                        values.style.display = 'block';
+                        arrow.textContent = '▼';
+                    }
+                }
+            });
+        }
+        
+        // Restore scroll position and focus after a small delay
+        setTimeout(() => {
+            // Restore scroll position
+            if (scrollContainer) {
+                scrollContainer.scrollTop = scrollPosition;
+            }
+            
+            // Try to restore focus to the previously active element
+            if (activeElementId) {
+                const elementToFocus = document.getElementById(activeElementId);
+                if (elementToFocus && elementToFocus.focus) {
+                    elementToFocus.focus();
+                }
+            } else if (activeElement && activeElement.focus) {
+                activeElement.focus();
+            }
+        }, 10);
     }
     
     // Rebuild filter options while maintaining open/closed state of sections
