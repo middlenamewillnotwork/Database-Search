@@ -494,6 +494,7 @@ tr:hover {
 .total-records {
     text-align: center;
     color: #54ffdc;
+    padding-left: 10px;
 }
 
 /* Modal */
