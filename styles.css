@@ -146,6 +146,75 @@ header .data-source-name {
     padding-right: 30px;
 }
 
+/* Export Container */
+.export-container {
+    position: relative;
+    display: inline-block;
+    z-index: 100;
+    margin-left: 10px;
+}
+
+.export-options {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background-color: #1f33cacf;
+    min-width: 150px;
+    border: 1px solid #1a2bb5;
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 2000;
+    max-height: 70vh;
+    overflow-y: auto;
+    transform: translateY(-10px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    display: none;
+}
+
+.export-options.show {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.export-options-header {
+    padding: 10px 15px;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background-color: #4a6fa5;
+    color: white;
+    font-size: 14px;
+}
+
+.export-option {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.export-option:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.export-option i {
+    width: 20px;
+    text-align: center;
+}
+
+.export-option[data-format="csv"] i { color: #28a745; }
+.export-option[data-format="excel"] i { color: #1d6f42; }
+.export-option[data-format="json"] i { color: #f0db4f; }
+
 #fetchData::after {
     content: '▼';
     font-size: 10px;
@@ -423,7 +492,6 @@ tr:hover {
 .total-records {
     text-align: center;
     color: #54ffdc;
-    margin-top: 10px;
 }
 
 /* Modal */

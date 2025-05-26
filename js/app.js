@@ -15,6 +15,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     setTimeout(() => {
         try {
             window.filterManager = new FilterManager(tableManager);
+            
+            // Initialize export manager after filter manager
+            try {
+                window.exportManager = new ExportManager(tableManager);
+            } catch (error) {
+                console.error('Error initializing ExportManager:', error);
+            }
         } catch (error) {
             console.error('Error initializing FilterManager:', error);
         }

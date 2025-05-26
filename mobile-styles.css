@@ -35,10 +35,23 @@
         min-width: 0; /* Allows the search container to shrink */
     }
     
-    .filter-container {
+    .filter-container, .export-container {
         width: auto;
-        min-width: 80px; /* Give the filter button a reasonable minimum width */
+        min-width: 44px; /* Make it square for the icon */
         height: 40px; /* Match search input height */
+    }
+    
+    /* Make export button square on mobile */
+    #exportBtn {
+        padding: 0;
+        width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #exportBtn i {
+        margin: 0;
     }
     
     #filterBtn {
