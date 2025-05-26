@@ -162,13 +162,45 @@ class FilterManager {
                                 <label for="filter-${header}-${this.escapeId(value)}">${value || '(empty)'}</label>
                             </div>
                         `).join('')}
-                        ${values.length > 100 ? '<div class="text-muted">...and ' + (values.length - 100) + ' more</div>' : ''}
+                        ${values.length > 100 ? `
+                            <div class="show-more-container">
+                                <a href="#" class="show-more-link" data-header="${header}">Show ${values.length - 100} more...</a>
+                            </div>
+                            <div class="remaining-values" style="display: none;">
+                                ${values.slice(100).map(value => `
+                                    <div class="filter-value">
+                                        <input type="checkbox" id="filter-${header}-${this.escapeId(value)}" 
+                                               data-column="${header}" value="${this.escapeHtml(value)}"
+                                               ${this.isFilterActive(header, value) ? 'checked' : ''}>
+                                        <label for="filter-${header}-${this.escapeId(value)}">${value || '(empty)'}</label>
+                                    </div>
+                                `).join('')}
+                        ` : ''}
                     </div>
                 </div>
             `;
         });
 
         this.elements.filterOptions.innerHTML = filterHtml;
+        
+        // Add click handler for Show More links
+        this.elements.filterOptions.querySelectorAll('.show-more-link').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const header = e.target.dataset.header;
+                const container = e.target.closest('.filter-option-values');
+                const remainingValues = container.querySelector('.remaining-values');
+                const showMoreContainer = container.querySelector('.show-more-container');
+                
+                if (remainingValues.style.display === 'none') {
+                    remainingValues.style.display = 'block';
+                    showMoreContainer.style.display = 'none';
+                } else {
+                    remainingValues.style.display = 'none';
+                    showMoreContainer.style.display = 'block';
+                }
+            });
+        });
         
         // Add event listeners for filter options
         this.elements.filterOptions.querySelectorAll('.filter-option-header').forEach(header => {

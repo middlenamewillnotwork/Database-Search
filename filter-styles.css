@@ -46,6 +46,30 @@
     background-color: #0056b3;
 }
 
+/* Show More Link Styling */
+.show-more-container {
+    text-align: left;
+    padding: 4px 0 4px 20px;
+    margin: 0;
+}
+
+.show-more-link {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.show-more-link:hover {
+    text-decoration: underline;
+}
+
+.remaining-values {
+    margin: 0;
+    padding: 0;
+}
+
 .filter-option-header.filter-applied {
     background: #d4f8e8; /* light green */
     border-radius: 4px;
