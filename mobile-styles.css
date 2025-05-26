@@ -1,0 +1,176 @@
+/* Mobile-specific styles */
+
+/* Base mobile styles */
+@media screen and (max-width: 768px) {
+    /* Adjust container padding for mobile */
+    .container {
+        padding: 10px;
+    }
+    
+    /* Header adjustments */
+    .header-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+        padding: 0 10px;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    /* Search and filter bar */
+    .search-filter-container {
+        flex-direction: row;
+        gap: 8px;
+        padding: 0;
+        align-items: center;
+        flex-wrap: nowrap;
+    }
+    
+    .search-container {
+        flex: 1;
+        min-width: 0; /* Allows the search container to shrink */
+    }
+    
+    .filter-container {
+        width: auto;
+        min-width: 80px; /* Give the filter button a reasonable minimum width */
+        height: 40px; /* Match search input height */
+    }
+    
+    #filterBtn {
+        width: auto;
+        min-width: 80px;
+        margin: 0;
+        padding: 0 10px;
+        white-space: nowrap;
+    }
+    
+    /* Filter dropdown */
+    .filter-dropdown {
+        width: 100%;
+        max-height: 70vh;
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        transform: translateY(100%);
+        border-radius: 10px 10px 0 0;
+        max-width: 100%;
+    }
+    
+    .filter-dropdown.visible {
+        transform: translateY(0);
+    }
+    
+    /* Table adjustments */
+    .table-container {
+        padding: 10px 5px;
+    }
+    
+    /* Pagination */
+    .pagination {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .pagination-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    /* Modal adjustments */
+    .modal-content {
+        width: 95%;
+        margin: 10px auto;
+        padding: 15px;
+    }
+    
+    /* Hide some columns on small screens */
+    .hide-on-mobile {
+        display: none;
+    }
+    
+    /* Adjust font sizes */
+    body {
+        font-size: 14px;
+    }
+    
+    th, td {
+        padding: 6px 4px;
+        font-size: 12px;
+    }
+    
+    /* Back to top button */
+    #backToTopBtn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+        bottom: 15px;
+        right: 15px;
+    }
+}
+
+/* Touch targets */
+@media (hover: none) and (pointer: coarse) {
+    /* Increase touch target sizes */
+    .btn, button, [role="button"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Make table rows easier to tap */
+    tr {
+        min-height: 44px;
+    }
+    
+    /* Improve dropdown touch targets */
+    .filter-option-item {
+        padding: 12px 15px;
+    }
+    
+    /* Increase checkbox size */
+    input[type="checkbox"] {
+        transform: scale(1.3);
+        margin-right: 8px;
+    }
+    
+    /* Improve button spacing */
+    .btn i {
+        margin-right: 8px;
+    }
+}
+
+/* Landscape mode adjustments */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+    .filter-dropdown {
+        max-height: 60vh;
+    }
+    
+    .table-container {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+}
+
+/* Very small devices */
+@media screen and (max-width: 360px) {
+    /* Adjust font sizes further for very small screens */
+    body {
+        font-size: 13px;
+    }
+    
+    th, td {
+        padding: 4px 2px;
+        font-size: 11px;
+    }
+    
+    /* Adjust padding in containers */
+    .container, .table-container {
+        padding: 5px;
+    }
+}
