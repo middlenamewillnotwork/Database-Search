@@ -54,6 +54,8 @@ header .data-source-name {
     font-weight: normal;
     opacity: 0.9;
     font-size: 1.1rem;
+    border-right: 1px solid rgb(138, 130, 241);
+    padding-right: 10px;
 }
 
 /* Data Source List */
